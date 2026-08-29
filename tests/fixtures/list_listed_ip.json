@@ -1,0 +1,21 @@
+[
+  {
+    "threat_type": "source-of-spam",
+    "reason": "found on a forum",
+    "id": "b0c8d9da509644e8dba62f36e24f19022071d17214830e6a0aebed84a9554bd8",
+    "submission_type": "ip",
+    "source": {
+      "object": "221.22.34.2"
+    },
+    "attributes": {
+      "address": "221.22.34.2",
+      "mask": "32"
+    },
+    "listed": [
+      "XBL",
+      "SBL"
+    ],
+    "last_check": "2023-09-06T09:38:40.408161Z",
+    "submission_ts": "2023-09-06T09:38:40.408161Z"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "threat_type": "source-of-spam",
+  "reason": "hitting personal mailbox without COI",
+  "id": "b0f67e0bae18ee10240905843bbb22c21af35c722f2d96f97f2863d63388e784",
+  "submission_type": "ip",
+  "source": {
+    "object": "221.22.34.3"
+  }
+}

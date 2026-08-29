@@ -1,0 +1,9 @@
+{
+  "threat_type": "source-of-spam",
+  "reason": "this url sends spam",
+  "id": "3ed4bd41c8d7c57a38cbc2576a99273e7a6087ab4ad148b545206b39ca3d0c04",
+  "submission_type": "url",
+  "source": {
+    "object": "baddomain.com/get/files/ddd"
+  }
+}
