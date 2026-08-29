@@ -6,30 +6,45 @@ use crate::report::ThreatTypeCode;
 use crate::submission::SubmissionKind;
 
 /// Which kinds of report a threat type can be used with.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ThreatScope {
     /// Any kind of report.
     Any,
     /// One kind of report only.
     Only(SubmissionKind),
+    /// A kind this crate does not know, kept as sent.
+    ///
+    /// Spamhaus owns the list of submission types. A type added after this release
+    /// arrives here instead of failing the call.
+    Other(String),
 }
 
 impl ThreatScope {
     /// Reports whether this scope covers `kind`.
-    pub fn covers(self, kind: SubmissionKind) -> bool {
+    ///
+    /// A scope this crate does not know covers nothing, because there is no way to
+    /// tell what it means.
+    pub fn covers(&self, kind: SubmissionKind) -> bool {
         match self {
             ThreatScope::Any => true,
-            ThreatScope::Only(only) => only == kind,
+            ThreatScope::Only(only) => *only == kind,
+            ThreatScope::Other(_) => false,
+        }
+    }
+
+    /// Returns the name the API uses for this scope.
+    pub fn as_str(&self) -> &str {
+        match self {
+            ThreatScope::Any => "*",
+            ThreatScope::Only(kind) => kind.as_str(),
+            ThreatScope::Other(name) => name,
         }
     }
 }
 
 impl Serialize for ThreatScope {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        match self {
-            ThreatScope::Any => serializer.serialize_str("*"),
-            ThreatScope::Only(kind) => serializer.serialize_str(kind.as_str()),
-        }
+        serializer.serialize_str(self.as_str())
     }
 }
 
@@ -41,9 +56,10 @@ impl<'de> Deserialize<'de> for ThreatScope {
             return Ok(ThreatScope::Any);
         }
 
-        serde_json::from_value(serde_json::Value::String(raw))
-            .map(ThreatScope::Only)
-            .map_err(serde::de::Error::custom)
+        Ok(match SubmissionKind::from_api_name(&raw) {
+            Some(kind) => ThreatScope::Only(kind),
+            None => ThreatScope::Other(raw),
+        })
     }
 }
 
@@ -113,10 +129,57 @@ mod tests {
     }
 
     #[test]
-    fn rejects_a_scope_that_names_no_known_kind() {
+    fn keeps_a_scope_that_names_no_known_kind() {
+        // A submission type added by Spamhaus after this release must not fail the
+        // whole call.
         let json = r#"{"code": "x", "desc": "x", "type": "carrier-pigeon"}"#;
 
-        assert!(serde_json::from_str::<ThreatType>(json).is_err());
+        let threat_type: ThreatType = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            threat_type.scope,
+            ThreatScope::Other("carrier-pigeon".to_string())
+        );
+    }
+
+    #[test]
+    fn an_unknown_scope_covers_no_kind() {
+        let unknown = ThreatScope::Other("carrier-pigeon".to_string());
+
+        for kind in [
+            SubmissionKind::Ip,
+            SubmissionKind::Domain,
+            SubmissionKind::Url,
+            SubmissionKind::Email,
+        ] {
+            assert!(
+                !unknown.covers(kind),
+                "expected an unknown scope not to cover {kind}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_unknown_scope_keeps_its_name_when_sent_back() {
+        let scope = ThreatScope::Other("carrier-pigeon".to_string());
+
+        assert_eq!(
+            serde_json::to_string(&scope).unwrap(),
+            r#""carrier-pigeon""#
+        );
+    }
+
+    #[test]
+    fn one_unknown_entry_does_not_lose_the_rest_of_the_list() {
+        let json = r#"[
+            {"code": "a", "desc": "a", "type": "carrier-pigeon"},
+            {"code": "b", "desc": "b", "type": "ip"}
+        ]"#;
+
+        let types: Vec<ThreatType> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(types.len(), 2);
+        assert!(types[1].applies_to(SubmissionKind::Ip));
     }
 
     #[test]

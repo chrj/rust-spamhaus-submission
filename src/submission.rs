@@ -35,6 +35,18 @@ impl SubmissionKind {
             SubmissionKind::Email => "email",
         }
     }
+
+    /// Reads a kind from the name the API uses, or `None` for a name this crate does
+    /// not know.
+    pub fn from_api_name(name: &str) -> Option<Self> {
+        match name {
+            "ip" => Some(SubmissionKind::Ip),
+            "domain" => Some(SubmissionKind::Domain),
+            "url" => Some(SubmissionKind::Url),
+            "email" => Some(SubmissionKind::Email),
+            _ => None,
+        }
+    }
 }
 
 impl std::fmt::Display for SubmissionKind {
