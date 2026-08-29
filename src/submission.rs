@@ -92,7 +92,10 @@ impl Dataset {
 }
 
 /// What Spamhaus stored for a report it accepted.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// [`Debug`] prints the size of an email report instead of its source. See
+/// [`Record`] for why.
+#[derive(Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Accepted {
     /// The identifier of the report.
@@ -211,7 +214,11 @@ pub enum Attributes {
 }
 
 /// One report in your history, with its review status.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// [`Debug`] prints the size of an email report instead of its source. A reported
+/// message is other people's mail, and full message source in a log is a privacy
+/// problem. [`RawEmail`](crate::RawEmail) does the same on the way out.
+#[derive(Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Record {
     /// The identifier of the report.
@@ -298,6 +305,62 @@ impl Default for ListParams {
             items: Self::DEFAULT_ITEMS,
             page: 1,
         }
+    }
+}
+
+/// Prints a reported value, except an email, which is printed as a size.
+struct DebugObject<'a> {
+    kind: SubmissionKind,
+    object: &'a str,
+}
+
+impl std::fmt::Debug for DebugObject<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.kind {
+            SubmissionKind::Email => write!(f, "<{} bytes of email source>", self.object.len()),
+            SubmissionKind::Ip | SubmissionKind::Domain | SubmissionKind::Url => {
+                std::fmt::Debug::fmt(self.object, f)
+            }
+        }
+    }
+}
+
+impl std::fmt::Debug for Accepted {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Accepted")
+            .field("id", &self.id)
+            .field("threat_type", &self.threat_type)
+            .field("reason", &self.reason)
+            .field("kind", &self.kind)
+            .field(
+                "object",
+                &DebugObject {
+                    kind: self.kind,
+                    object: &self.object,
+                },
+            )
+            .finish()
+    }
+}
+
+impl std::fmt::Debug for Record {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Record")
+            .field("id", &self.id)
+            .field("threat_type", &self.threat_type)
+            .field("reason", &self.reason)
+            .field("kind", &self.kind)
+            .field(
+                "object",
+                &DebugObject {
+                    kind: self.kind,
+                    object: &self.object,
+                },
+            )
+            .field("attributes", &self.attributes)
+            .field("status", &self.status)
+            .field("submitted_at", &self.submitted_at)
+            .finish()
     }
 }
 
@@ -660,6 +723,69 @@ mod tests {
         let accepted: Accepted = serde_json::from_str(&json).unwrap();
 
         assert_eq!(accepted.reason.as_str().len(), 300);
+    }
+
+    #[test]
+    fn debug_of_an_email_record_hides_the_message() {
+        let source = "From: sender@example.com\r\n\r\nbuy stuff";
+        let json = format!(
+            r#"{{"threat_type":"t","reason":"r","id":"x","submission_type":"email",
+                 "source":{{"object":"{}"}},"attributes":{{"subject":"Buy stuff"}},
+                 "listed":null,"last_check":null,
+                 "submission_ts":"2023-09-06T09:38:40.408161Z"}}"#,
+            source.replace('\r', "\\r").replace('\n', "\\n")
+        );
+
+        let record: Record = serde_json::from_str(&json).unwrap();
+        let printed = format!("{record:?}");
+
+        assert!(
+            !printed.contains("buy stuff"),
+            "the message body must not be printed: {printed}"
+        );
+        assert!(
+            !printed.contains("sender@example.com"),
+            "headers must not be printed: {printed}"
+        );
+        assert!(
+            printed.contains("<37 bytes of email source>"),
+            "expected a size: {printed}"
+        );
+    }
+
+    #[test]
+    fn debug_of_an_ip_record_still_shows_the_address() {
+        let record = parse_record("null", "null", IP_ATTRIBUTES);
+
+        assert!(format!("{record:?}").contains("221.22.34.2"));
+    }
+
+    #[test]
+    fn debug_of_an_accepted_email_hides_the_message() {
+        let json = r#"{"threat_type":"t","reason":"r","id":"x","submission_type":"email",
+                       "source":{"object":"Subject: hi\n\nbuy stuff"}}"#;
+
+        let accepted: Accepted = serde_json::from_str(json).unwrap();
+        let printed = format!("{accepted:?}");
+
+        assert!(
+            !printed.contains("buy stuff"),
+            "the message must not be printed: {printed}"
+        );
+        assert!(
+            printed.contains("<22 bytes of email source>"),
+            "expected a size: {printed}"
+        );
+    }
+
+    #[test]
+    fn debug_of_an_accepted_ip_still_shows_the_address() {
+        let json = r#"{"threat_type":"t","reason":"r","id":"x","submission_type":"ip",
+                       "source":{"object":"221.22.34.3"}}"#;
+
+        let accepted: Accepted = serde_json::from_str(json).unwrap();
+
+        assert!(format!("{accepted:?}").contains("221.22.34.3"));
     }
 
     #[test]
