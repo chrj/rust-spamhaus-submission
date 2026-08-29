@@ -1,5 +1,6 @@
 //! The HTTP client for the Submission Portal API.
 
+use std::net::IpAddr;
 use std::time::Duration;
 
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
@@ -133,7 +134,7 @@ impl Client {
         let path = format!("submissions/add/{}", report.target().kind());
         let response = self.http.post(self.url(&path)).json(report).send().await?;
 
-        self.read_outcome(response).await
+        read_outcome(response).await
     }
 
     /// Reports an IP address.
@@ -145,7 +146,7 @@ impl Client {
         &self,
         threat_type: ThreatTypeCode,
         reason: Reason,
-        address: std::net::IpAddr,
+        address: IpAddr,
     ) -> Result<Outcome, Error> {
         self.submit(&Report::new(threat_type, reason, Target::Ip(address)))
             .await
@@ -208,31 +209,32 @@ impl Client {
 
         serde_json::from_str(&body).map_err(|source| Error::Decode { context, source })
     }
+}
 
-    async fn read_outcome(&self, response: Response) -> Result<Outcome, Error> {
-        const CONTEXT: &str = "submissions/add";
+/// Reads the result of a submission.
+async fn read_outcome(response: Response) -> Result<Outcome, Error> {
+    const CONTEXT: &str = "submissions/add";
 
-        // 208 is a success status, so it has to be handled before the body is read as
-        // an accepted report.
-        if response.status() == StatusCode::ALREADY_REPORTED {
-            return Ok(Outcome::AlreadyReported);
-        }
-
-        let body = read_body(response, CONTEXT).await?;
-
-        // The documentation does not say whether the 208 is carried by the status line
-        // or by the body, so a body that reports 208 counts too.
-        if reported_status(&body) == Some(StatusCode::ALREADY_REPORTED.as_u16()) {
-            return Ok(Outcome::AlreadyReported);
-        }
-
-        serde_json::from_str::<Accepted>(&body)
-            .map(Outcome::Accepted)
-            .map_err(|source| Error::Decode {
-                context: CONTEXT,
-                source,
-            })
+    // 208 is a success status, so it has to be handled before the body is read as
+    // an accepted report.
+    if response.status() == StatusCode::ALREADY_REPORTED {
+        return Ok(Outcome::AlreadyReported);
     }
+
+    let body = read_body(response, CONTEXT).await?;
+
+    // The documentation does not say whether the 208 is carried by the status line
+    // or by the body, so a body that reports 208 counts too.
+    if reported_status(&body) == Some(StatusCode::ALREADY_REPORTED.as_u16()) {
+        return Ok(Outcome::AlreadyReported);
+    }
+
+    serde_json::from_str::<Accepted>(&body)
+        .map(Outcome::Accepted)
+        .map_err(|source| Error::Decode {
+            context: CONTEXT,
+            source,
+        })
 }
 
 /// Reads the body of a response, turning an error status into an [`Error`].
