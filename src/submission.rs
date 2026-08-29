@@ -272,11 +272,14 @@ impl ListParams {
     }
 
     /// Returns the same page size, one page further on.
-    pub fn next_page(self) -> Self {
-        Self {
+    ///
+    /// Returns `None` on the last page number the API can express. Page numbers stop
+    /// at [`u32::MAX`], so this is the end of what you can ask for.
+    pub fn next_page(self) -> Option<Self> {
+        self.page.checked_add(1).map(|page| Self {
             items: self.items,
-            page: self.page + 1,
-        }
+            page,
+        })
     }
 }
 
@@ -691,8 +694,17 @@ mod tests {
 
     #[test]
     fn next_page_keeps_the_page_size() {
-        let params = ListParams::new(50, 2).unwrap().next_page();
+        let params = ListParams::new(50, 2).unwrap().next_page().unwrap();
 
         assert_eq!((params.items(), params.page()), (50, 3));
+    }
+
+    #[test]
+    fn there_is_no_page_after_the_last_one() {
+        // The old code added one here. That panics in a debug build and wraps to the
+        // invalid page 0 in a release build.
+        let last = ListParams::new(100, u32::MAX).unwrap();
+
+        assert_eq!(last.next_page(), None);
     }
 }
