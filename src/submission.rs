@@ -458,10 +458,16 @@ fn read_attributes(kind: SubmissionKind, attributes: Option<Value>) -> Attribute
         SubmissionKind::Url => {
             read_string(&fields, "sha-256").map(|sha256| Attributes::Url { sha256 })
         }
-        // A message without a subject is normal, so this shape always fits.
-        SubmissionKind::Email => Some(Attributes::Email {
-            subject: read_string(&fields, "subject"),
-        }),
+        // A message with no subject is normal, so a missing or null field still
+        // fits. A subject that is not a string does not fit, and falls through to
+        // Unknown with the rest of the fields.
+        SubmissionKind::Email => match fields.get("subject") {
+            None | Some(Value::Null) => Some(Attributes::Email { subject: None }),
+            Some(Value::String(subject)) => Some(Attributes::Email {
+                subject: Some(subject.clone()),
+            }),
+            Some(_) => None,
+        },
     };
 
     known.unwrap_or(Attributes::Unknown(fields))
@@ -688,6 +694,43 @@ mod tests {
                 subject: Some("Buy stuff".to_string())
             }
         );
+    }
+
+    /// Builds a record of an email report with the given `attributes` object.
+    fn email_record(attributes: &str) -> Record {
+        let json = record_json("null", "null", attributes).replace(
+            r#""submission_type": "ip""#,
+            r#""submission_type": "email""#,
+        );
+
+        serde_json::from_str(&json).unwrap()
+    }
+
+    #[test]
+    fn a_message_with_no_subject_is_still_an_email_attribute() {
+        for attributes in ["{}", r#"{"subject": null}"#] {
+            assert_eq!(
+                email_record(attributes).attributes,
+                Attributes::Email { subject: None },
+                "expected {attributes} to read as an email with no subject"
+            );
+        }
+    }
+
+    #[test]
+    fn keeps_a_subject_that_is_not_a_string() {
+        // The documented rule is that a shape this crate does not know is kept as
+        // Unknown. Reading this as "no subject" would throw the value away.
+        let record = email_record(r#"{"subject": 42, "extra": "keep me"}"#);
+
+        let Attributes::Unknown(fields) = record.attributes else {
+            panic!(
+                "expected the raw fields to be kept, got {:?}",
+                record.attributes
+            );
+        };
+        assert_eq!(fields.get("subject").unwrap().as_i64(), Some(42));
+        assert_eq!(fields.get("extra").unwrap().as_str(), Some("keep me"));
     }
 
     #[test]
