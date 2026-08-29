@@ -1,0 +1,9 @@
+{
+  "threat_type": "source-of-spam",
+  "reason": "this email contains a virus",
+  "id": "83ce6737149a9fec5d793892816d3eafca55217fef9329555bad9829e3e818d0",
+  "submission_type": "email",
+  "source": {
+    "object": "Subject: Oggetto dell'email\n\nThis is the email body. Hello.\n"
+  }
+}

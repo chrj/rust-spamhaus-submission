@@ -1,0 +1,28 @@
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[licenses]
+version = 2
+# Every licence a dependency of this crate may carry. Add to this list only after
+# you read the licence.
+allow = [
+    "Apache-2.0",
+    "BSD-3-Clause",
+    # webpki-roots, which carries the Mozilla root certificate store.
+    "CDLA-Permissive-2.0",
+    "ISC",
+    "MIT",
+    "Unicode-3.0",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

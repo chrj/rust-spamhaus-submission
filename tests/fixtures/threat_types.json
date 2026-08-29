@@ -1,0 +1,12 @@
+[
+  {
+    "code": "bulletproof-hosting",
+    "desc": "bulletproof hosting",
+    "type": "*"
+  },
+  {
+    "code": "hijacked-network",
+    "desc": "hijacked network",
+    "type": "ip"
+  }
+]

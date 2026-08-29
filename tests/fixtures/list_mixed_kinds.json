@@ -1,0 +1,48 @@
+[
+  {
+    "threat_type": "source-of-spam",
+    "reason": "malevolant email content",
+    "id": "83ce6737149a9fec5d793892816d3eafca55217fef9329555bad9829e3e818d0",
+    "submission_type": "email",
+    "source": {
+      "object": "Subject: Buy stuff\n\nbody"
+    },
+    "attributes": {
+      "subject": "Buy stuff"
+    },
+    "listed": null,
+    "last_check": null,
+    "submission_ts": "2023-09-06T12:39:40.162738Z"
+  },
+  {
+    "threat_type": "source-of-spam",
+    "reason": "this url is bad",
+    "id": "3ed4bd41c8d7c57a38cbc2576a99273e7a6087ab4ad148b545206b39ca3d0c04",
+    "submission_type": "url",
+    "source": {
+      "object": "baddomain.com/test"
+    },
+    "attributes": {
+      "sha-256": "b2fb538cd53b88f9f566616993a3d35e6d89088c1dcb7fee25d8a1fc392f2013"
+    },
+    "listed": null,
+    "last_check": null,
+    "submission_ts": "2023-09-06T12:34:14.217019Z"
+  },
+  {
+    "threat_type": "bulletproof-hosting",
+    "reason": "this is a bad domain",
+    "id": "449bf8416c18d19a30db6d853f416a2192065c3f44a354f041d9224fc926bde4",
+    "submission_type": "domain",
+    "source": {
+      "object": "www.test.com"
+    },
+    "attributes": {
+      "domain": "test.com",
+      "tld": "com"
+    },
+    "listed": null,
+    "last_check": null,
+    "submission_ts": "2023-09-04T14:59:17.765406Z"
+  }
+]

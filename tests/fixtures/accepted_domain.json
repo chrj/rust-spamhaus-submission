@@ -1,0 +1,9 @@
+{
+  "threat_type": "source-of-spam",
+  "reason": "this domain is very bad",
+  "id": "ae6719a510a3ee3afd0a535138c2be0e3ec17cc22a490806b62940a629f40056",
+  "submission_type": "domain",
+  "source": {
+    "object": "www.baddomain.com"
+  }
+}
