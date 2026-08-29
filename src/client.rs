@@ -96,6 +96,7 @@ impl Client {
     /// Reads every page of your reports, starting at `params`.
     ///
     /// Paging stops at the first page that returns fewer records than the page size.
+    /// It also stops at the last page number the API can express.
     ///
     /// # Errors
     ///
@@ -116,7 +117,10 @@ impl Client {
                 return Ok(records);
             }
 
-            params = params.next_page();
+            match params.next_page() {
+                Some(next) => params = next,
+                None => return Ok(records),
+            }
         }
     }
 
