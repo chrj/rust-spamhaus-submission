@@ -62,3 +62,22 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: EmbarkStudios/cargo-deny-action@v2
+
+  # One check that stands for the whole workflow. Branch protection requires this
+  # job only, so a change to the job list above does not need a settings change.
+  gate:
+    name: CI success
+    needs: [test, lint, docs, deny]
+    # Without this the job is skipped when a dependency fails, and a required check
+    # that never reports blocks every merge.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show the result of every job
+        run: echo '${{ toJSON(needs) }}'
+      - name: Fail when any job did not pass
+        if: >-
+          contains(needs.*.result, 'failure')
+          || contains(needs.*.result, 'cancelled')
+          || contains(needs.*.result, 'skipped')
+        run: exit 1
