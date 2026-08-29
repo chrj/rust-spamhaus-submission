@@ -2,7 +2,7 @@
 name = "spamhaus-submission"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.88"
 description = "Async client for the Spamhaus Submission Portal API"
 repository = "https://github.com/chrj/rust-spamhaus-submission"
 license = "MIT"

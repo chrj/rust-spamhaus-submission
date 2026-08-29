@@ -263,9 +263,8 @@ struct ErrorBody {
 /// Pulls the `message` out of an error body, falling back to the body itself so the
 /// caller is never left with an error status and no explanation.
 fn error_message(body: &str, context: &str) -> String {
-    if let Ok(parsed) = serde_json::from_str::<ErrorBody>(body)
-        && let Some(message) = parsed.message
-    {
+    let reported = serde_json::from_str::<ErrorBody>(body).ok();
+    if let Some(message) = reported.and_then(|body| body.message) {
         return message;
     }
 
