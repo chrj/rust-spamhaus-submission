@@ -18,7 +18,7 @@
 //!
 //! let outcome = client
 //!     .submit_ip(
-//!         ThreatTypeCode::new("source-of-spam")?,
+//!         ThreatTypeCode::new("spam")?,
 //!         Reason::new("found on a forum")?,
 //!         "221.22.34.2".parse().unwrap(),
 //!     )

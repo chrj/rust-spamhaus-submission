@@ -245,7 +245,7 @@ impl From<RawEmail> for Target {
     }
 }
 
-/// A code that names the kind of threat you report, such as `source-of-spam`.
+/// A code that names the kind of threat you report, such as `spam`.
 ///
 /// This is not an enum because Spamhaus owns the list and adds to it. Read the current
 /// list with [`Client::threat_types`](crate::Client::threat_types).
@@ -312,7 +312,7 @@ impl FromStr for UrlTarget {
 /// use spamhaus_submission::{Report, Target, ThreatTypeCode, Reason};
 ///
 /// let report = Report::new(
-///     ThreatTypeCode::new("source-of-spam")?,
+///     ThreatTypeCode::new("spam")?,
 ///     Reason::new("found on a forum")?,
 ///     Target::Ip("221.22.34.2".parse().unwrap()),
 /// );
