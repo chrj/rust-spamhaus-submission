@@ -25,6 +25,8 @@ jobs:
         with:
           command: release
         env:
+          # This job tags and publishes. Nothing reacts to the events it makes, so
+          # it keeps the default token and the smaller set of rights.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
@@ -48,5 +50,8 @@ jobs:
         with:
           command: release-pr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A pull request opened with the default GITHUB_TOKEN starts no workflow
+          # runs. The required check would never report and the release pull
+          # request could never merge, so this job uses a personal access token.
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
