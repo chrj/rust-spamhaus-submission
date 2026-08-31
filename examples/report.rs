@@ -3,8 +3,11 @@
 //! Set SPAMHAUS_TOKEN to a key from <https://auth.spamhaus.org/account>, then run:
 //!
 //! ```sh
-//! cargo run --example report -- 221.22.34.2 "found on a forum"
+//! cargo run --example report -- 221.22.34.2 spam "found on a forum"
 //! ```
+//!
+//! The threat type is an argument, because Spamhaus owns the list of codes. The
+//! example prints the codes it can use before it asks for one.
 //!
 //! Without arguments the example only reads. It reports nothing.
 
@@ -51,14 +54,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut args = std::env::args().skip(1);
-    let (Some(address), Some(reason)) = (args.next(), args.next()) else {
-        println!("\nPass an IP address and a reason to send a report.");
+    let (Some(address), Some(threat_type), Some(reason)) = (args.next(), args.next(), args.next())
+    else {
+        println!("\nPass an IP address, a threat type and a reason to send a report.");
+        println!("Use one of the threat type codes listed above.");
         return Ok(());
     };
 
     let outcome = client
         .submit_ip(
-            ThreatTypeCode::new("source-of-spam")?,
+            ThreatTypeCode::new(threat_type)?,
             Reason::new(reason)?,
             address.parse::<IpAddr>()?,
         )

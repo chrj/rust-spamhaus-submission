@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let outcome = client
         .submit_ip(
-            ThreatTypeCode::new("source-of-spam")?,
+            ThreatTypeCode::new("spam")?,
             Reason::new("found on a forum")?,
             "221.22.34.2".parse()?,
         )
@@ -61,6 +61,11 @@ picks the endpoint from its `Target`.
 
 Every report needs a threat type code. Spamhaus owns the list and adds to it, so read
 the current list instead of writing the codes into your program.
+
+Some codes in the Spamhaus API documentation do not exist. The documentation shows
+`source-of-spam` and `bulletproof-hosting`, but the API returns `attack`,
+`bulletproof` and `spam`. Read the list from the API and you always have the codes it
+accepts.
 
 ```rust
 use spamhaus_submission::{Client, Error, SubmissionKind};
