@@ -14,7 +14,8 @@
 use std::net::IpAddr;
 
 use spamhaus_submission::{
-    ApiToken, Client, ListParams, Outcome, Reason, Status, SubmissionKind, ThreatTypeCode,
+    ApiToken, Attributes, Client, ListParams, Outcome, Reason, Record, Status, SubmissionKind,
+    ThreatTypeCode,
 };
 
 #[tokio::main]
@@ -50,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         };
 
-        println!("  {:<8} {:<40} {status}", record.kind, record.object);
+        println!("  {:<8} {:<40} {status}", record.kind, summarise(&record));
     }
 
     let mut args = std::env::args().skip(1);
@@ -75,4 +76,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+/// Returns one short line for a record.
+///
+/// The `object` of an email report is the full message source. Printing it puts other
+/// people's mail on the screen and in the shell history, so this prints the subject
+/// and the size instead.
+fn summarise(record: &Record) -> String {
+    let line = match (record.kind, &record.attributes) {
+        (
+            SubmissionKind::Email,
+            Attributes::Email {
+                subject: Some(subject),
+            },
+        ) => {
+            format!("{subject} [{} bytes]", record.object.len())
+        }
+        (SubmissionKind::Email, _) => format!("no subject [{} bytes]", record.object.len()),
+        _ => record.object.clone(),
+    };
+
+    // Keep the table straight whatever the value holds.
+    let line: String = line.chars().filter(|c| !c.is_control()).take(40).collect();
+
+    line
 }

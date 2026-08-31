@@ -107,6 +107,11 @@ pub struct Accepted {
     /// The kind of report.
     pub kind: SubmissionKind,
     /// The reported value, as Spamhaus stored it.
+    ///
+    /// For an email report this is the whole message source, headers included. Give
+    /// it the same care as the message. [`Debug`] on this struct prints its size
+    /// instead, but printing this field yourself puts other people's mail in your
+    /// output.
     pub object: String,
 }
 
@@ -230,6 +235,11 @@ pub struct Record {
     /// The kind of report.
     pub kind: SubmissionKind,
     /// The reported value, as Spamhaus stored it.
+    ///
+    /// For an email report this is the whole message source, headers included. Give
+    /// it the same care as the message. [`Debug`] on this struct prints its size
+    /// instead, but printing this field yourself puts other people's mail in your
+    /// output.
     pub object: String,
     /// What Spamhaus read out of the value.
     pub attributes: Attributes,
