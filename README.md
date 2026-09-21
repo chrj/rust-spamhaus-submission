@@ -28,7 +28,7 @@ The crate needs an async runtime. The examples below use [Tokio].
 
 ## Report an IP address
 
-```rust
+```rust,no_run
 use spamhaus_submission::{ApiToken, Client, Outcome, Reason, ThreatTypeCode};
 
 #[tokio::main]
